@@ -1,0 +1,13 @@
+# macOS ve editör
+.DS_Store
+.vscode/
+
+# Docker deneme ortamı: şifreler, üretilen dosyalar, loglar
+*/docker/.env
+*/docker/config.env
+*/docker/root-ca.pem
+*/docker/logs/
+
+# İndirilen paketler (docker/up.sh yeniden indirir)
+*/docker/rpm/
+*/docker/deb/

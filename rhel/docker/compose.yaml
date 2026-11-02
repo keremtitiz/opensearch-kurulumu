@@ -1,0 +1,60 @@
+# 7 sunucu (5 node, 2 dashboard) ve localhost köprüsü. Kurulumu up.sh yapar.
+name: opensearch-kurulum
+
+x-server: &server
+  image: opensearch-kurulum-rhel10
+  build: .
+  privileged: true              # systemd ve OpenSearch servis birimi için
+  stop_signal: SIGRTMIN+3
+  stop_grace_period: 60s
+  volumes:
+    - ..:/root/opensearch-kurulum:ro
+    - ./config.env:/root/opensearch-kurulum/config.env:ro
+    - ./rpm:/root/opensearch-rpm:ro
+    - bundle:/bundle            # scp yerine: node1'in paketleri buradan okunur
+
+services:
+  node1:
+    <<: *server
+    hostname: node1
+    networks: { cluster: { ipv4_address: 172.28.50.11 } }
+  node2:
+    <<: *server
+    hostname: node2
+    networks: { cluster: { ipv4_address: 172.28.50.12 } }
+  node3:
+    <<: *server
+    hostname: node3
+    networks: { cluster: { ipv4_address: 172.28.50.13 } }
+  node4:
+    <<: *server
+    hostname: node4
+    networks: { cluster: { ipv4_address: 172.28.50.14 } }
+  node5:
+    <<: *server
+    hostname: node5
+    networks: { cluster: { ipv4_address: 172.28.50.15 } }
+  dashboard1:
+    <<: *server
+    hostname: dashboard1
+    networks: { cluster: { ipv4_address: 172.28.50.21 } }
+  dashboard2:
+    <<: *server
+    hostname: dashboard2
+    networks: { cluster: { ipv4_address: 172.28.50.22 } }
+  gateway:
+    image: haproxy:3.2-alpine
+    volumes:
+      - ./gateway.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks: { cluster: { ipv4_address: 172.28.50.30 } }
+    # Mac'te host portu 443, TLS el sıkışmasında sıfırlanıyor; diğer portlardan aynı zincir çalışıyor
+    ports: ["127.0.0.1:8443:443", "127.0.0.1:9200:9200"]
+
+networks:
+  cluster:
+    ipam:
+      config:
+        - subnet: 172.28.50.0/24
+
+volumes:
+  bundle:
